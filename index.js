@@ -1,21 +1,26 @@
-require('dotenv').config();
-const TelegramBot = require('node-telegram-bot-api');
+require("dotenv").config();
+const TelegramBot = require("node-telegram-bot-api");
 
-const BOT_TOKEN = process.env.BOT_TOKEN || '8257396483:AAHy5ZJwvfy16QeqOnbZh-g-1sEMdcJruFk';
-const WEB_APP_URL = process.env.WEB_APP_URL || 'https://your-web-app.example.com';
-const COMMUNITY_INVITE_LINK = process.env.COMMUNITY_INVITE_LINK || 'https://t.me/joinchat/XXXX';
-const BANNER_IMAGE_URL = process.env.BANNER_IMAGE_URL || 'https://your-banner-image-url.com/banner.jpg';
-const SOCIALS_LINK = process.env.SOCIALS_LINK || 'https://twitter.com/genz';
+const BOT_TOKEN =
+  process.env.BOT_TOKEN || "8257396483:AAHy5ZJwvfy16QeqOnbZh-g-1sEMdcJruFk";
+const WEB_APP_URL =
+  process.env.WEB_APP_URL || "https://your-web-app.example.com";
+const COMMUNITY_INVITE_LINK =
+  process.env.COMMUNITY_INVITE_LINK || "https://t.me/joinchat/XXXX";
+const BANNER_IMAGE_URL =
+  process.env.BANNER_IMAGE_URL ||
+  "https://your-banner-image-url.com/banner.jpg";
+const SOCIALS_LINK = process.env.SOCIALS_LINK || "https://twitter.com/genz";
 
 // Initialize bot
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
-console.log('GenZ Bot is running...');
+console.log("GenZ Bot is running...");
 
 // Start command handler
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
-  const username = msg.from.username || msg.from.first_name || 'Player';
+  const username = msg.from.username || msg.from.first_name || "Player";
 
   // Welcome message
   const welcomeMessage = `Hey, @${username}! Welcome to GenZ 🎮
@@ -35,23 +40,23 @@ Invite your friends, relatives, and co-workers to join the game. The more player
   const inlineKeyboard = {
     inline_keyboard: [
       [
-        { text: '🎮 Play Now', web_app: { url: WEB_APP_URL } },
-        { text: '👥 Join Community', url: COMMUNITY_INVITE_LINK }
+        { text: "🎮 Play Now", web_app: { url: WEB_APP_URL } },
+        { text: "👥 Join Community", url: COMMUNITY_INVITE_LINK },
       ],
       [
-        { text: '🌐 Socials', callback_data: 'socials' },
-        { text: '❓ How it Works', callback_data: 'how_it_works' }
-      ]
-    ]
+        { text: "🌐 Socials", callback_data: "socials" },
+        { text: "❓ How it Works", callback_data: "how_it_works" },
+      ],
+    ],
   };
 
   // Reply keyboard with "Open GenZ" button (persistent keyboard)
+  // Keyboard configurations
   const replyKeyboard = {
-    keyboard: [
-      [{ text: '🎮 Open GenZ', web_app: { url: WEB_APP_URL } }]
-    ],
+    keyboard: [[{ text: "🎮 Open GenZ", web_app: { url: WEB_APP_URL } }]],
     resize_keyboard: true,
-    persistent: true
+    persistent: true,
+    one_time_keyboard: false, // Explicitly set to keep it always visible
   };
 
   try {
@@ -59,28 +64,28 @@ Invite your friends, relatives, and co-workers to join the game. The more player
     await bot.sendPhoto(chatId, BANNER_IMAGE_URL, {
       caption: welcomeMessage,
       reply_markup: inlineKeyboard,
-      parse_mode: 'Markdown'
+      parse_mode: "Markdown",
     });
 
     // Send the persistent keyboard
-    await bot.sendMessage(chatId, '👇 Quick access to GenZ:', {
-      reply_markup: replyKeyboard
+    await bot.sendMessage(chatId, "👇 Quick access to GenZ:", {
+      reply_markup: replyKeyboard,
     });
   } catch (error) {
-    console.error('Error sending message:', error);
+    console.error("Error sending message:", error);
     // Fallback: send text message if image fails
     await bot.sendMessage(chatId, welcomeMessage, {
       reply_markup: inlineKeyboard,
-      parse_mode: 'Markdown'
+      parse_mode: "Markdown",
     });
-    await bot.sendMessage(chatId, '👇 Quick access to GenZ:', {
-      reply_markup: replyKeyboard
+    await bot.sendMessage(chatId, "👇 Quick access to GenZ:", {
+      reply_markup: replyKeyboard,
     });
   }
 });
 
 // Callback query handler for inline buttons
-bot.on('callback_query', async (query) => {
+bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
   const data = query.data;
 
@@ -88,7 +93,7 @@ bot.on('callback_query', async (query) => {
   await bot.answerCallbackQuery(query.id);
 
   switch (data) {
-    case 'socials':
+    case "socials":
       const socialsMessage = `🌐 Connect with GenZ on Social Media:
 
 📱 Follow us for updates, tournaments, and exclusive rewards!
@@ -102,17 +107,17 @@ Stay connected to never miss a game update! 🚀`;
 
       const socialsKeyboard = {
         inline_keyboard: [
-          [{ text: '🐦 Follow on Twitter', url: SOCIALS_LINK }],
-          [{ text: '« Back to Menu', callback_data: 'back_to_menu' }]
-        ]
+          [{ text: "🐦 Follow on Twitter", url: SOCIALS_LINK }],
+          [{ text: "« Back to Menu", callback_data: "back_to_menu" }],
+        ],
       };
 
       await bot.sendMessage(chatId, socialsMessage, {
-        reply_markup: socialsKeyboard
+        reply_markup: socialsKeyboard,
       });
       break;
 
-    case 'how_it_works':
+    case "how_it_works":
       const howItWorksMessage = `❓ How GenZ Works:
 
 🎮 **Step 1: Choose Your Game**
@@ -135,18 +140,18 @@ Ready to start? Tap "Play Now" below! 🚀`;
 
       const howItWorksKeyboard = {
         inline_keyboard: [
-          [{ text: '🎮 Play Now', web_app: { url: WEB_APP_URL } }],
-          [{ text: '« Back to Menu', callback_data: 'back_to_menu' }]
-        ]
+          [{ text: "🎮 Play Now", web_app: { url: WEB_APP_URL } }],
+          [{ text: "« Back to Menu", callback_data: "back_to_menu" }],
+        ],
       };
 
       await bot.sendMessage(chatId, howItWorksMessage, {
         reply_markup: howItWorksKeyboard,
-        parse_mode: 'Markdown'
+        parse_mode: "Markdown",
       });
       break;
 
-    case 'back_to_menu':
+    case "back_to_menu":
       const menuMessage = `🎮 GenZ Gaming Menu
 
 Select an option below:`;
@@ -154,60 +159,57 @@ Select an option below:`;
       const menuKeyboard = {
         inline_keyboard: [
           [
-            { text: '🎮 Play Now', web_app: { url: WEB_APP_URL } },
-            { text: '👥 Join Community', url: COMMUNITY_INVITE_LINK }
+            { text: "🎮 Play Now", web_app: { url: WEB_APP_URL } },
+            { text: "👥 Join Community", url: COMMUNITY_INVITE_LINK },
           ],
           [
-            { text: '🌐 Socials', callback_data: 'socials' },
-            { text: '❓ How it Works', callback_data: 'how_it_works' }
-          ]
-        ]
+            { text: "🌐 Socials", callback_data: "socials" },
+            { text: "❓ How it Works", callback_data: "how_it_works" },
+          ],
+        ],
       };
 
       await bot.sendMessage(chatId, menuMessage, {
-        reply_markup: menuKeyboard
+        reply_markup: menuKeyboard,
       });
       break;
   }
 });
 
 // Handle text messages (for keyboard button presses)
-bot.on('message', async (msg) => {
+bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
 
   // Ignore commands
-  if (text && text.startsWith('/')) return;
+  if (text && text.startsWith("/")) return;
 
   // Handle "Open GenZ" button from reply keyboard
-  if (text === '🎮 Open GenZ') {
-    await bot.sendMessage(chatId, '🎮 Opening GenZ gaming platform...', {
+  if (text === "🎮 Open GenZ") {
+    await bot.sendMessage(chatId, "🎮 Opening GenZ gaming platform...", {
       reply_markup: {
         inline_keyboard: [
-          [{ text: '🚀 Launch GenZ', web_app: { url: WEB_APP_URL } }]
-        ]
-      }
+          [{ text: "🚀 Launch GenZ", web_app: { url: WEB_APP_URL } }],
+        ],
+      },
     });
   }
 });
 
 // Error handling
-bot.on('polling_error', (error) => {
-  console.error('Polling error:', error);
+bot.on("polling_error", (error) => {
+  console.error("Polling error:", error);
 });
 
 // Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('Stopping bot...');
+process.on("SIGINT", () => {
+  console.log("Stopping bot...");
   bot.stopPolling();
   process.exit(0);
 });
 
-process.on('SIGTERM', () => {
-  console.log('Stopping bot...');
+process.on("SIGTERM", () => {
+  console.log("Stopping bot...");
   bot.stopPolling();
   process.exit(0);
 });
-
-
-
