@@ -4,7 +4,7 @@ const { Telegraf, Markup } = require('telegraf');
 const BOT_TOKEN = process.env.BOT_TOKEN || '8257396483:AAHy5ZJwvfy16QeqOnbZh-g-1sEMdcJruFk';
 const WEB_APP_URL = process.env.WEB_APP_URL || 'https://your-web-app.example.com';
 const COMMUNITY_INVITE_LINK = process.env.COMMUNITY_INVITE_LINK || 'https://t.me/joinchat/XXXX';
-const BANNER_URL = process.env.BANNER_URL || 'https://yourdomain.com/assets/genz-banner.jpg';
+
 
 if (!BOT_TOKEN) {
   console.error('Please set BOT_TOKEN environment variable.');
@@ -38,11 +38,11 @@ function persistentReplyKeyboard() {
 bot.start(async (ctx) => {
   try {
     const firstName = ctx.from?.first_name || ctx.from?.username || 'Player';
-    // Send banner image first (either local file or remote URL)
-    // If you host the file, put a URL; Telegraf accepts URLs for sendPhoto.
-    await ctx.replyWithPhoto({ url: BANNER_URL }, {
-      caption: `Hey, ${firstName}! Welcome to GenZ`,
-    });
+    // Send local banner image
+    await ctx.replyWithPhoto(
+      { source: './assets/banner.jpg' },
+      { caption: `Hey, ${firstName}! Welcome to GenZ` }
+    );
 
     // Send the improved welcome message and the inline keyboard + persistent reply keyboard
     const welcomeMessage = `Hey, ${firstName}! Welcome to *GenZ* — your gateway to fast, social skill-based gaming.\n\n` +
