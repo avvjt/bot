@@ -12,20 +12,17 @@ const BANNER_IMAGE_URL =
   "https://your-banner-image-url.com/banner.jpg";
 const SOCIALS_LINK = process.env.SOCIALS_LINK || "https://twitter.com/genz";
 
-// Initialize bot
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 console.log("GenZ Bot is running...");
 
-// Start command handler
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const username = msg.from.username || msg.from.first_name || "Player";
 
-  // Welcome message
   const welcomeMessage = `Hey, @${username}! Welcome to GenZ 🎮
 
-GenZ is a community-driven gaming platform where you can play multiple exciting games like Aviator and win real money! 💰
+GenZ is a community-driven gaming platform where you can play multiple exciting games like Aviator & Color trade and win real money! 💰
 
 🎯 Play games and compete with players worldwide
 💎 Win real money with every game
@@ -36,7 +33,6 @@ Invite your friends, relatives, and co-workers to join the game. The more player
 
 🫵🏻 Tap "Play Now" to start your gaming journey!`;
 
-  // Inline keyboard with 4 horizontal buttons
   const inlineKeyboard = {
     inline_keyboard: [
       [
@@ -50,30 +46,25 @@ Invite your friends, relatives, and co-workers to join the game. The more player
     ],
   };
 
-  // Reply keyboard with "Open GenZ" button (persistent keyboard)
-  // Keyboard configurations
   const replyKeyboard = {
     keyboard: [[{ text: "🎮 Open GenZ", web_app: { url: WEB_APP_URL } }]],
     resize_keyboard: true,
     persistent: true,
-    one_time_keyboard: false, // Explicitly set to keep it always visible
+    one_time_keyboard: false,
   };
 
   try {
-    // Send banner image with welcome message
     await bot.sendPhoto(chatId, BANNER_IMAGE_URL, {
       caption: welcomeMessage,
       reply_markup: inlineKeyboard,
       parse_mode: "Markdown",
     });
 
-    // Send the persistent keyboard
     await bot.sendMessage(chatId, "👇 Quick access to GenZ:", {
       reply_markup: replyKeyboard,
     });
   } catch (error) {
     console.error("Error sending message:", error);
-    // Fallback: send text message if image fails
     await bot.sendMessage(chatId, welcomeMessage, {
       reply_markup: inlineKeyboard,
       parse_mode: "Markdown",
@@ -84,12 +75,10 @@ Invite your friends, relatives, and co-workers to join the game. The more player
   }
 });
 
-// Callback query handler for inline buttons
 bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
   const data = query.data;
 
-  // Answer callback query to remove loading state
   await bot.answerCallbackQuery(query.id);
 
   switch (data) {
@@ -176,15 +165,12 @@ Select an option below:`;
   }
 });
 
-// Handle text messages (for keyboard button presses)
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
 
-  // Ignore commands
   if (text && text.startsWith("/")) return;
 
-  // Handle "Open GenZ" button from reply keyboard
   if (text === "🎮 Open GenZ") {
     await bot.sendMessage(chatId, "🎮 Opening GenZ gaming platform...", {
       reply_markup: {
@@ -196,12 +182,10 @@ bot.on("message", async (msg) => {
   }
 });
 
-// Error handling
 bot.on("polling_error", (error) => {
   console.error("Polling error:", error);
 });
 
-// Graceful shutdown
 process.on("SIGINT", () => {
   console.log("Stopping bot...");
   bot.stopPolling();
