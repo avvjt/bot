@@ -2,10 +2,10 @@
   "name": "genz-telegram-bot",
   "version": "1.0.0",
   "description": "GenZ Gaming Platform Telegram Bot",
-  "main": "bot.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node bot.js",
-    "dev": "nodemon bot.js"
+    "start": "node index.js",
+    "dev": "nodemon index.js"
   },
   "keywords": ["telegram", "bot", "gaming", "genz"],
   "author": "",
