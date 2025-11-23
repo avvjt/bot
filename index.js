@@ -49,28 +49,23 @@ Invite your friends, relatives, and co-workers to join the game. The more player
   };
 
   try {
-    // Send banner with reply keyboard attached
     await bot.sendPhoto(chatId, BANNER_IMAGE_URL, {
       caption: welcomeMessage,
-      reply_markup: replyKeyboard,
+      reply_markup: inlineKeyboard,
       parse_mode: "Markdown",
     });
 
-    // Send inline keyboard as separate message
-    await bot.sendMessage(chatId, "Choose an option:", {
-      reply_markup: inlineKeyboard,
+    await bot.sendMessage(chatId, "👇 Quick access to GenZ:", {
+      reply_markup: replyKeyboard,
     });
   } catch (error) {
     console.error("Error sending message:", error);
-    // Fallback: send text with reply keyboard
     await bot.sendMessage(chatId, welcomeMessage, {
-      reply_markup: replyKeyboard,
+      reply_markup: inlineKeyboard,
       parse_mode: "Markdown",
     });
-    
-    // Then send inline options
-    await bot.sendMessage(chatId, "Choose an option:", {
-      reply_markup: inlineKeyboard,
+    await bot.sendMessage(chatId, "👇 Quick access to GenZ:", {
+      reply_markup: replyKeyboard,
     });
   }
 });
@@ -165,10 +160,8 @@ bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
 
-  // Ignore commands
   if (text && text.startsWith("/")) return;
 
-  // Handle "Open GenZ" button press
   if (text === "🎮 Open GenZ") {
     await bot.sendMessage(chatId, "🎮 Opening GenZ gaming platform...", {
       reply_markup: {
