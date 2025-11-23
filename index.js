@@ -3,8 +3,7 @@ const TelegramBot = require("node-telegram-bot-api");
 
 const BOT_TOKEN =
   process.env.BOT_TOKEN || "8257396483:AAHy5ZJwvfy16QeqOnbZh-g-1sEMdcJruFk";
-const WEB_APP_URL =
-  process.env.WEB_APP_URL || "https://tradexy.netlify.app/";
+const WEB_APP_URL = process.env.WEB_APP_URL || "https://tradexy.netlify.app/";
 const COMMUNITY_INVITE_LINK =
   process.env.COMMUNITY_INVITE_LINK || "https://t.me/joinchat/XXXX";
 const BANNER_IMAGE_URL =
@@ -35,14 +34,10 @@ Invite your friends, relatives, and co-workers to join the game. The more player
 
   const inlineKeyboard = {
     inline_keyboard: [
-      [
-        { text: "🎮 Play Now", web_app: { url: WEB_APP_URL } },
-        { text: "👥 Join Community", url: COMMUNITY_INVITE_LINK },
-      ],
-      [
-        { text: "🌐 Socials", callback_data: "socials" },
-        { text: "❓ How it Works", callback_data: "how_it_works" },
-      ],
+      [{ text: "🎮 Play Now", web_app: { url: WEB_APP_URL } }],
+      [{ text: "👥 Join Community", url: COMMUNITY_INVITE_LINK }],
+      [{ text: "🌐 Socials", callback_data: "socials" }],
+      [{ text: "❓ How it Works", callback_data: "how_it_works" }],
     ],
   };
 
