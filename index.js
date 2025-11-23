@@ -4,7 +4,7 @@ const TelegramBot = require("node-telegram-bot-api");
 const BOT_TOKEN =
   process.env.BOT_TOKEN || "8257396483:AAHy5ZJwvfy16QeqOnbZh-g-1sEMdcJruFk";
 const WEB_APP_URL =
-  process.env.WEB_APP_URL || "https://your-web-app.example.com";
+  process.env.WEB_APP_URL || "https://tradexy.netlify.app/";
 const COMMUNITY_INVITE_LINK =
   process.env.COMMUNITY_INVITE_LINK || "https://t.me/joinchat/XXXX";
 const BANNER_IMAGE_URL =
