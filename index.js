@@ -147,14 +147,10 @@ Select an option below:`;
 
       const menuKeyboard = {
         inline_keyboard: [
-          [
-            { text: "🎮 Play Now", web_app: { url: WEB_APP_URL } },
-            { text: "👥 Join Community", url: COMMUNITY_INVITE_LINK },
-          ],
-          [
-            { text: "🌐 Socials", callback_data: "socials" },
-            { text: "❓ How it Works", callback_data: "how_it_works" },
-          ],
+          [{ text: "🎮 Play Now", web_app: { url: WEB_APP_URL } }],
+          [{ text: "👥 Join Community", url: COMMUNITY_INVITE_LINK }],
+          [{ text: "🌐 Socials", callback_data: "socials" }],
+          [{ text: "❓ How it Works", callback_data: "how_it_works" }],
         ],
       };
 
