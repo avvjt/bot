@@ -1,7 +1,7 @@
 // bot.js
 const { Telegraf, Markup } = require('telegraf');
 
-const BOT_TOKEN = process.env.BOT_TOKEN;
+const BOT_TOKEN = process.env.BOT_TOKEN || '8257396483:AAHy5ZJwvfy16QeqOnbZh-g-1sEMdcJruFk';
 const WEB_APP_URL = process.env.WEB_APP_URL || 'https://your-web-app.example.com';
 const COMMUNITY_INVITE_LINK = process.env.COMMUNITY_INVITE_LINK || 'https://t.me/joinchat/XXXX';
 const BANNER_URL = process.env.BANNER_URL || 'https://yourdomain.com/assets/genz-banner.jpg';
