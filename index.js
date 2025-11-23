@@ -15,17 +15,6 @@ const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 console.log("GenZ Bot is running...");
 
-// Build the persistent reply keyboard (same as in your previous code)
-function getPersistentKeyboard() {
-  return {
-    keyboard: [
-      [{ text: "🎮 Open GenZ", web_app: { url: WEB_APP_URL } }]
-    ],
-    resize_keyboard: true,
-    one_time_keyboard: false
-  };
-}
-
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
   const username = msg.from.username || msg.from.first_name || "Player";
@@ -52,72 +41,36 @@ Invite your friends, relatives, and co-workers to join the game. The more player
     ],
   };
 
-  try {
-    // Send banner with inline keyboard
-    await bot.sendPhoto(chatId, BANNER_IMAGE_URL, {
-      caption: welcomeMessage,
-      reply_markup: inlineKeyboard,
-      parse_mode: "Markdown",
-    });
-
-    // Send a separate message with the PERSISTENT reply keyboard
-    // This will make "Open GenZ" appear at the bottom left of the keyboard
-    await bot.sendMessage(chatId, "Quick access:", {
-      reply_markup: getPersistentKeyboard()
-    });
-  } catch (error) {
-    console.error("Error sending message:", error);
-    
-    // Fallback: send welcome message without photo
-    await bot.sendMessage(chatId, welcomeMessage, {
-      reply_markup: inlineKeyboard,
-      parse_mode: "Markdown",
-    });
-    
-    // Still send the persistent keyboard
-    await bot.sendMessage(chatId, "Quick access:", {
-      reply_markup: getPersistentKeyboard()
-    });
-  }
-});
-
-// Alternative approach: If you want the persistent keyboard to be the MAIN keyboard
-// you can modify the /start handler like this:
-bot.onText(/\/start2/, async (msg) => {
-  const chatId = msg.chat.id;
-  const username = msg.from.username || msg.from.first_name || "Player";
-
-  const welcomeMessage = `Hey, @${username}! Welcome to GenZ 🎮
-
-Your gaming adventure starts here!`;
-
-  const inlineKeyboard = {
-    inline_keyboard: [
-      [{ text: "🎮 Play Now", web_app: { url: WEB_APP_URL } }],
-      [{ text: "👥 Join Community", url: COMMUNITY_INVITE_LINK }],
-      [{ text: "🌐 Socials", callback_data: "socials" }],
-      [{ text: "❓ How it Works", callback_data: "how_it_works" }],
-    ],
+  const replyKeyboard = {
+    keyboard: [[{ text: "🎮 Open GenZ", web_app: { url: WEB_APP_URL } }]],
+    resize_keyboard: true,
+    persistent: true,
+    one_time_keyboard: false,
   };
 
   try {
-    // Send banner with inline keyboard AND persistent reply keyboard
+    // Send banner with reply keyboard attached
     await bot.sendPhoto(chatId, BANNER_IMAGE_URL, {
       caption: welcomeMessage,
-      reply_markup: getPersistentKeyboard(), // This makes "Open GenZ" appear below the input field
+      reply_markup: replyKeyboard,
+      parse_mode: "Markdown",
     });
 
     // Send inline keyboard as separate message
     await bot.sendMessage(chatId, "Choose an option:", {
-      reply_markup: inlineKeyboard
+      reply_markup: inlineKeyboard,
     });
   } catch (error) {
     console.error("Error sending message:", error);
+    // Fallback: send text with reply keyboard
     await bot.sendMessage(chatId, welcomeMessage, {
-      reply_markup: getPersistentKeyboard(),
+      reply_markup: replyKeyboard,
+      parse_mode: "Markdown",
     });
+    
+    // Then send inline options
     await bot.sendMessage(chatId, "Choose an option:", {
-      reply_markup: inlineKeyboard
+      reply_markup: inlineKeyboard,
     });
   }
 });
@@ -208,13 +161,14 @@ Select an option below:`;
   }
 });
 
-// Handle the "Open GenZ" button press
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
 
+  // Ignore commands
   if (text && text.startsWith("/")) return;
 
+  // Handle "Open GenZ" button press
   if (text === "🎮 Open GenZ") {
     await bot.sendMessage(chatId, "🎮 Opening GenZ gaming platform...", {
       reply_markup: {
