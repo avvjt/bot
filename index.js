@@ -1,12 +1,8 @@
 require("dotenv").config();
 const TelegramBot = require("node-telegram-bot-api");
 
-const BOT_TOKEN = process.env.BOT_TOKEN;
-if (!BOT_TOKEN) {
-  console.error("Please set BOT_TOKEN in environment.");
-  process.exit(1);
-}
-
+const BOT_TOKEN =
+  process.env.BOT_TOKEN || "8257396483:AAHy5ZJwvfy16QeqOnbZh-g-1sEMdcJruFk";
 const WEB_APP_URL = process.env.WEB_APP_URL || "https://tradexy.netlify.app/";
 const COMMUNITY_INVITE_LINK =
   process.env.COMMUNITY_INVITE_LINK || "https://t.me/joinchat/XXXX";
@@ -18,6 +14,17 @@ const SOCIALS_LINK = process.env.SOCIALS_LINK || "https://twitter.com/genz";
 const bot = new TelegramBot(BOT_TOKEN, { polling: true });
 
 console.log("GenZ Bot is running...");
+
+// Build the persistent reply keyboard (same as in your previous code)
+function getPersistentKeyboard() {
+  return {
+    keyboard: [
+      [{ text: "🎮 Open GenZ", web_app: { url: WEB_APP_URL } }]
+    ],
+    resize_keyboard: true,
+    one_time_keyboard: false
+  };
+}
 
 bot.onText(/\/start/, async (msg) => {
   const chatId = msg.chat.id;
@@ -36,7 +43,6 @@ Invite your friends, relatives, and co-workers to join the game. The more player
 
 🫵🏻 Tap "Play Now" to start your gaming journey!`;
 
-  // Inline keyboard for the photo message (shown below photo)
   const inlineKeyboard = {
     inline_keyboard: [
       [{ text: "🎮 Play Now", web_app: { url: WEB_APP_URL } }],
@@ -46,36 +52,72 @@ Invite your friends, relatives, and co-workers to join the game. The more player
     ],
   };
 
-  // Correct reply keyboard that appears in the input area (left side)
-  // NOTE: field name is `is_persistent` (Telegram Bot API)
-  const replyKeyboard = {
-    keyboard: [[{ text: "🎮 Open GenZ", web_app: { url: WEB_APP_URL } }]],
-    resize_keyboard: true,
-    one_time_keyboard: false,
-    is_persistent: true,
-  };
-
   try {
-    // Send a banner photo with inline keyboard below it
+    // Send banner with inline keyboard
     await bot.sendPhoto(chatId, BANNER_IMAGE_URL, {
       caption: welcomeMessage,
       reply_markup: inlineKeyboard,
       parse_mode: "Markdown",
     });
 
-    // Send a second message that ensures the reply keyboard is shown in the input area
-    await bot.sendMessage(chatId, "👇 Quick access to GenZ:", {
-      reply_markup: replyKeyboard,
+    // Send a separate message with the PERSISTENT reply keyboard
+    // This will make "Open GenZ" appear at the bottom left of the keyboard
+    await bot.sendMessage(chatId, "Quick access:", {
+      reply_markup: getPersistentKeyboard()
     });
   } catch (error) {
     console.error("Error sending message:", error);
-    // fallback: at least send the plain message + keyboard
+    
+    // Fallback: send welcome message without photo
     await bot.sendMessage(chatId, welcomeMessage, {
       reply_markup: inlineKeyboard,
       parse_mode: "Markdown",
     });
-    await bot.sendMessage(chatId, "👇 Quick access to GenZ:", {
-      reply_markup: replyKeyboard,
+    
+    // Still send the persistent keyboard
+    await bot.sendMessage(chatId, "Quick access:", {
+      reply_markup: getPersistentKeyboard()
+    });
+  }
+});
+
+// Alternative approach: If you want the persistent keyboard to be the MAIN keyboard
+// you can modify the /start handler like this:
+bot.onText(/\/start2/, async (msg) => {
+  const chatId = msg.chat.id;
+  const username = msg.from.username || msg.from.first_name || "Player";
+
+  const welcomeMessage = `Hey, @${username}! Welcome to GenZ 🎮
+
+Your gaming adventure starts here!`;
+
+  const inlineKeyboard = {
+    inline_keyboard: [
+      [{ text: "🎮 Play Now", web_app: { url: WEB_APP_URL } }],
+      [{ text: "👥 Join Community", url: COMMUNITY_INVITE_LINK }],
+      [{ text: "🌐 Socials", callback_data: "socials" }],
+      [{ text: "❓ How it Works", callback_data: "how_it_works" }],
+    ],
+  };
+
+  try {
+    // Send banner with inline keyboard AND persistent reply keyboard
+    await bot.sendPhoto(chatId, BANNER_IMAGE_URL, {
+      caption: welcomeMessage,
+      reply_markup: getPersistentKeyboard(), // This makes "Open GenZ" appear below the input field
+    });
+
+    // Send inline keyboard as separate message
+    await bot.sendMessage(chatId, "Choose an option:", {
+      reply_markup: inlineKeyboard
+    });
+  } catch (error) {
+    console.error("Error sending message:", error);
+    await bot.sendMessage(chatId, welcomeMessage, {
+      reply_markup: getPersistentKeyboard(),
+    });
+    await bot.sendMessage(chatId, "Choose an option:", {
+      reply_markup: inlineKeyboard
     });
   }
 });
@@ -84,14 +126,10 @@ bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
   const data = query.data;
 
-  try {
-    await bot.answerCallbackQuery(query.id, { text: "" });
-  } catch (e) {
-    // ignore answer errors
-  }
+  await bot.answerCallbackQuery(query.id);
 
   switch (data) {
-    case "socials": {
+    case "socials":
       const socialsMessage = `🌐 Connect with GenZ on Social Media:
 
 📱 Follow us for updates, tournaments, and exclusive rewards!
@@ -114,25 +152,24 @@ Stay connected to never miss a game update! 🚀`;
         reply_markup: socialsKeyboard,
       });
       break;
-    }
 
-    case "how_it_works": {
+    case "how_it_works":
       const howItWorksMessage = `❓ How GenZ Works:
 
-🎮 Step 1: Choose Your Game
+🎮 **Step 1: Choose Your Game**
 Browse through exciting games like Aviator, Dice, and more!
 
-💰 Step 2: Select Your Mode
+💰 **Step 2: Select Your Mode**
 - Demo Mode: Practice for free with virtual coins
 - Real Mode: Play with real money and win big!
 
-🎯 Step 3: Play & Win
+🎯 **Step 3: Play & Win**
 Master the game mechanics and compete for rewards
 
-💎 Step 4: Withdraw Earnings
+💎 **Step 4: Withdraw Earnings**
 Cash out your winnings anytime to your preferred payment method
 
-👥 Bonus: Invite Friends
+👥 **Bonus: Invite Friends**
 Earn referral bonuses for every friend you bring to GenZ!
 
 Ready to start? Tap "Play Now" below! 🚀`;
@@ -149,9 +186,8 @@ Ready to start? Tap "Play Now" below! 🚀`;
         parse_mode: "Markdown",
       });
       break;
-    }
 
-    case "back_to_menu": {
+    case "back_to_menu":
       const menuMessage = `🎮 GenZ Gaming Menu
 
 Select an option below:`;
@@ -169,22 +205,22 @@ Select an option below:`;
         reply_markup: menuKeyboard,
       });
       break;
-    }
   }
 });
 
-// Handle plain messages (user clicking the reply keyboard button sends a normal message text)
+// Handle the "Open GenZ" button press
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
 
-  // ignore commands
-  if (!text || text.startsWith("/")) return;
+  if (text && text.startsWith("/")) return;
 
   if (text === "🎮 Open GenZ") {
     await bot.sendMessage(chatId, "🎮 Opening GenZ gaming platform...", {
       reply_markup: {
-        inline_keyboard: [[{ text: "🚀 Launch GenZ", web_app: { url: WEB_APP_URL } }]],
+        inline_keyboard: [
+          [{ text: "🚀 Launch GenZ", web_app: { url: WEB_APP_URL } }],
+        ],
       },
     });
   }
