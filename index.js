@@ -1,190 +1,563 @@
 require("dotenv").config();
+
 const TelegramBot = require("node-telegram-bot-api");
+const fs = require("fs");
+const path = require("path");
 
-const BOT_TOKEN =
-  process.env.BOT_TOKEN || "8257396483:AAHy5ZJwvfy16QeqOnbZh-g-1sEMdcJruFk";
-const WEB_APP_URL = process.env.WEB_APP_URL || "https://tradexy.netlify.app/";
+const BOT_TOKEN = process.env.BOT_TOKEN;
+
+const WEB_APP_URL =
+  process.env.WEB_APP_URL || "https://cryptomintx.co.in";
+
+const BACKEND_URL =
+  process.env.BACKEND_URL ||
+  "https://backendxmint.onrender.com";
+
 const COMMUNITY_INVITE_LINK =
-  process.env.COMMUNITY_INVITE_LINK || "https://t.me/joinchat/XXXX";
-const BANNER_IMAGE_URL =
-  process.env.BANNER_IMAGE_URL ||
-  "https://your-banner-image-url.com/banner.jpg";
-const SOCIALS_LINK = process.env.SOCIALS_LINK || "https://twitter.com/genz";
+  process.env.COMMUNITY_INVITE_LINK ||
+  "https://t.me/CryptomintxBot";
 
-const bot = new TelegramBot(BOT_TOKEN, { polling: true });
+if (!BOT_TOKEN) {
+  throw new Error("BOT_TOKEN is not configured");
+}
 
-console.log("GenZ Bot is running...");
+if (!process.env.TELEGRAM_BOT_LINK_SECRET) {
+  throw new Error("TELEGRAM_BOT_LINK_SECRET is not configured");
+}
 
-bot.onText(/\/start/, async (msg) => {
+const bot = new TelegramBot(BOT_TOKEN, {
+  polling: true,
+});
+
+console.log("CryptoMintX Telegram Bot is running...");
+
+// ============================================================
+// MINI APP URL
+// ============================================================
+
+const TELEGRAM_AUTH_URL = `${WEB_APP_URL}/telegram-auth`;
+
+// ============================================================
+// BANNER IMAGE
+// ============================================================
+
+// Banner should be inside the bot root directory.
+// Supported names:
+// banner.jpg
+// banner.jpeg
+// banner.png
+// banner.webp
+
+const possibleBannerFiles = [
+  "banner.jpg",
+  "banner.jpeg",
+  "banner.png",
+  "banner.webp",
+];
+
+let BANNER_IMAGE_PATH = null;
+
+for (const fileName of possibleBannerFiles) {
+  const filePath = path.join(__dirname, fileName);
+
+  if (fs.existsSync(filePath)) {
+    BANNER_IMAGE_PATH = filePath;
+    break;
+  }
+}
+
+if (BANNER_IMAGE_PATH) {
+  console.log(
+    `Telegram banner found: ${path.basename(BANNER_IMAGE_PATH)}`
+  );
+} else {
+  console.log(
+    "No banner image found. /start will use text-only fallback."
+  );
+}
+
+// ============================================================
+// START
+// ============================================================
+
+bot.onText(/^\/start(?:\s+(.+))?$/, async (msg, match) => {
   const chatId = msg.chat.id;
-  const username = msg.from.username || msg.from.first_name || "Player";
+  const firstName = msg.from.first_name || "there";
 
-  const welcomeMessage = `Hey, @${username}! Welcome to GenZ 🎮
+  // Token supplied after /start
+  const linkToken = match?.[1]?.trim();
 
-GenZ is a community-driven gaming platform where you can play multiple exciting games like Aviator & Color trade and win real money! 💰
+  // ==========================================================
+  // TELEGRAM ACCOUNT LINKING
+  // ==========================================================
 
-🎯 Play games and compete with players worldwide
-💎 Win real money with every game
-🎮 Enjoy demo mode for free - no money needed, just pure fun!
-🚀 Master your skills and climb the leaderboards
+  if (linkToken) {
+    try {
+      const response = await fetch(
+        `${BACKEND_URL}/api/auth/telegram/complete-link`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "x-telegram-bot-secret":
+              process.env.TELEGRAM_BOT_LINK_SECRET,
+          },
+          body: JSON.stringify({
+            token: linkToken,
+            telegramUser: {
+              id: msg.from.id,
+            },
+          }),
+        }
+      );
 
-Invite your friends, relatives, and co-workers to join the game. The more players you bring in, the more rewards you earn! 💸
+      const data = await response.json();
 
-🫵🏻 Tap "Play Now" to start your gaming journey!`;
+      if (!response.ok || !data.success) {
+        await bot.sendMessage(
+          chatId,
+          `
+❌ <b>Telegram linking failed</b>
+
+${data.message || "The link token is invalid or expired."}
+
+Please generate a new Telegram connection from your CryptoMintX profile.
+`,
+          {
+            parse_mode: "HTML",
+          }
+        );
+
+        return;
+      }
+
+      await bot.sendMessage(
+        chatId,
+        `
+✅ <b>Telegram Connected!</b>
+
+Your Telegram account has been successfully connected to your CryptoMintX account.
+
+You can now open CryptoMintX directly from Telegram.
+`,
+        {
+          parse_mode: "HTML",
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: "🚀 Open CryptoMintX",
+                  web_app: {
+                    url: TELEGRAM_AUTH_URL,
+                  },
+                },
+              ],
+            ],
+          },
+        }
+      );
+
+      return;
+    } catch (error) {
+      console.error("TELEGRAM LINK ERROR:", error);
+
+      await bot.sendMessage(
+        chatId,
+        `
+❌ <b>Unable to connect Telegram</b>
+
+Please try generating a new connection from your CryptoMintX profile.
+`,
+        {
+          parse_mode: "HTML",
+        }
+      );
+
+      return;
+    }
+  }
+
+  // ==========================================================
+  // NORMAL START
+  // ==========================================================
+
+  const welcomeMessage = `
+👋 Welcome to <b>CryptoMintX</b>, ${firstName}!
+
+Your simple platform for managing and exploring digital assets.
+
+📊 Explore live crypto markets
+💰 Manage your wallet
+🤖 Use Auto Trade
+👥 Track your referral network
+🔐 Manage your account securely
+
+Tap <b>Open CryptoMintX</b> to get started.
+`;
+
+  // ==========================================================
+  // MAIN INLINE MENU
+  // ==========================================================
 
   const inlineKeyboard = {
     inline_keyboard: [
-      [{ text: "🎮 Play Now", web_app: { url: WEB_APP_URL } }],
-      [{ text: "👥 Join Community", url: COMMUNITY_INVITE_LINK }],
-      [{ text: "🌐 Socials", callback_data: "socials" }],
-      [{ text: "❓ How it Works", callback_data: "how_it_works" }],
+      // Open dashboard
+      [
+        {
+          text: "🚀 Open CryptoMintX",
+          web_app: {
+            url: TELEGRAM_AUTH_URL,
+          },
+        },
+      ],
+
+      // Markets
+      [
+        {
+          text: "📊 Markets",
+          web_app: {
+            url: `${TELEGRAM_AUTH_URL}?redirect=/markets`,
+          },
+        },
+      ],
+
+      // Wallet
+      [
+        {
+          text: "💰 Wallet",
+          web_app: {
+            url: `${TELEGRAM_AUTH_URL}?redirect=/wallet`,
+          },
+        },
+      ],
+
+      // Auto Trade + Team
+      [
+        {
+          text: "🤖 Auto Trade",
+          web_app: {
+            url: `${TELEGRAM_AUTH_URL}?redirect=/trade`,
+          },
+        },
+        {
+          text: "👥 Team",
+          web_app: {
+            url: `${TELEGRAM_AUTH_URL}?redirect=/team`,
+          },
+        },
+      ],
+
+      // Community
+      [
+        {
+          text: "👥 Community",
+          url: COMMUNITY_INVITE_LINK,
+        },
+      ],
+
+      // Help
+      [
+        {
+          text: "❓ Help",
+          callback_data: "help",
+        },
+      ],
     ],
   };
 
+  // ==========================================================
+  // REPLY KEYBOARD
+  // ==========================================================
+
   const replyKeyboard = {
-    keyboard: [[{ text: "🎮 Open GenZ", web_app: { url: WEB_APP_URL } }]],
+    keyboard: [
+      [
+        {
+          text: "🚀 Open CryptoMintX",
+          web_app: {
+            url: TELEGRAM_AUTH_URL,
+          },
+        },
+      ],
+    ],
     resize_keyboard: true,
     persistent: true,
     one_time_keyboard: false,
   };
 
   try {
-    await bot.sendPhoto(chatId, BANNER_IMAGE_URL, {
-      caption: welcomeMessage,
-      reply_markup: inlineKeyboard,
-      parse_mode: "Markdown",
-    });
+    // ========================================================
+    // SEND BANNER + WELCOME MESSAGE
+    // ========================================================
 
-    await bot.sendMessage(chatId, "👇 Quick access to GenZ:", {
-      reply_markup: replyKeyboard,
-    });
+    if (BANNER_IMAGE_PATH) {
+      await bot.sendPhoto(chatId, BANNER_IMAGE_PATH, {
+        caption: welcomeMessage,
+        reply_markup: inlineKeyboard,
+        parse_mode: "HTML",
+      });
+    } else {
+      // Fallback if banner doesn't exist
+      await bot.sendMessage(chatId, welcomeMessage, {
+        reply_markup: inlineKeyboard,
+        parse_mode: "HTML",
+      });
+    }
+
+    // ========================================================
+    // QUICK ACCESS
+    // ========================================================
+
+    await bot.sendMessage(
+      chatId,
+      "👇 Quick access to CryptoMintX:",
+      {
+        reply_markup: replyKeyboard,
+      }
+    );
   } catch (error) {
-    console.error("Error sending message:", error);
-    await bot.sendMessage(chatId, welcomeMessage, {
-      reply_markup: inlineKeyboard,
-      parse_mode: "Markdown",
-    });
-    await bot.sendMessage(chatId, "👇 Quick access to GenZ:", {
-      reply_markup: replyKeyboard,
-    });
+    console.error("START ERROR:", error);
+
+    // ========================================================
+    // FINAL TEXT FALLBACK
+    // ========================================================
+
+    try {
+      await bot.sendMessage(chatId, welcomeMessage, {
+        reply_markup: inlineKeyboard,
+        parse_mode: "HTML",
+      });
+
+      await bot.sendMessage(
+        chatId,
+        "👇 Quick access to CryptoMintX:",
+        {
+          reply_markup: replyKeyboard,
+        }
+      );
+    } catch (fallbackError) {
+      console.error(
+        "START FALLBACK ERROR:",
+        fallbackError
+      );
+    }
   }
 });
+
+// ============================================================
+// CALLBACK BUTTONS
+// ============================================================
 
 bot.on("callback_query", async (query) => {
   const chatId = query.message.chat.id;
   const data = query.data;
 
-  await bot.answerCallbackQuery(query.id);
+  try {
+    await bot.answerCallbackQuery(query.id);
 
-  switch (data) {
-    case "socials":
-      const socialsMessage = `🌐 Connect with GenZ on Social Media:
+    switch (data) {
+      // ------------------------------------------------------
+      // HELP
+      // ------------------------------------------------------
 
-📱 Follow us for updates, tournaments, and exclusive rewards!
+      case "help": {
+        const helpMessage = `
+🆘 <b>CryptoMintX Help</b>
 
-🔗 Links:
-- Twitter/X: ${SOCIALS_LINK}
-- Instagram: Coming Soon
-- Discord: Coming Soon
+Need assistance with your account?
 
-Stay connected to never miss a game update! 🚀`;
+You can use the CryptoMintX platform to:
 
-      const socialsKeyboard = {
-        inline_keyboard: [
-          [{ text: "🐦 Follow on Twitter", url: SOCIALS_LINK }],
-          [{ text: "« Back to Menu", callback_data: "back_to_menu" }],
-        ],
-      };
+📊 Explore markets
+💰 Manage your wallet
+🤖 Use Auto Trade
+👥 Manage your referral activity
 
-      await bot.sendMessage(chatId, socialsMessage, {
-        reply_markup: socialsKeyboard,
-      });
-      break;
+Open CryptoMintX to access your account.
+`;
 
-    case "how_it_works":
-      const howItWorksMessage = `❓ How GenZ Works:
+        const helpKeyboard = {
+          inline_keyboard: [
+            [
+              {
+                text: "🚀 Open CryptoMintX",
+                web_app: {
+                  url: TELEGRAM_AUTH_URL,
+                },
+              },
+            ],
 
-🎮 **Step 1: Choose Your Game**
-Browse through exciting games like Aviator, Dice, and more!
+            [
+              {
+                text: "« Back to Menu",
+                callback_data: "back_to_menu",
+              },
+            ],
+          ],
+        };
 
-💰 **Step 2: Select Your Mode**
-- Demo Mode: Practice for free with virtual coins
-- Real Mode: Play with real money and win big!
+        await bot.sendMessage(
+          chatId,
+          helpMessage,
+          {
+            reply_markup: helpKeyboard,
+            parse_mode: "HTML",
+          }
+        );
 
-🎯 **Step 3: Play & Win**
-Master the game mechanics and compete for rewards
+        break;
+      }
 
-💎 **Step 4: Withdraw Earnings**
-Cash out your winnings anytime to your preferred payment method
+      // ------------------------------------------------------
+      // BACK TO MENU
+      // ------------------------------------------------------
 
-👥 **Bonus: Invite Friends**
-Earn referral bonuses for every friend you bring to GenZ!
+      case "back_to_menu": {
+        const menuMessage = `
+🚀 <b>CryptoMintX</b>
 
-Ready to start? Tap "Play Now" below! 🚀`;
+What would you like to open?
+`;
 
-      const howItWorksKeyboard = {
-        inline_keyboard: [
-          [{ text: "🎮 Play Now", web_app: { url: WEB_APP_URL } }],
-          [{ text: "« Back to Menu", callback_data: "back_to_menu" }],
-        ],
-      };
+        const menuKeyboard = {
+          inline_keyboard: [
+            // Dashboard
+            [
+              {
+                text: "🚀 Open CryptoMintX",
+                web_app: {
+                  url: TELEGRAM_AUTH_URL,
+                },
+              },
+            ],
 
-      await bot.sendMessage(chatId, howItWorksMessage, {
-        reply_markup: howItWorksKeyboard,
-        parse_mode: "Markdown",
-      });
-      break;
+            // Markets
+            [
+              {
+                text: "📊 Markets",
+                web_app: {
+                  url: `${TELEGRAM_AUTH_URL}?redirect=/markets`,
+                },
+              },
+            ],
 
-    case "back_to_menu":
-      const menuMessage = `🎮 GenZ Gaming Menu
+            // Wallet
+            [
+              {
+                text: "💰 Wallet",
+                web_app: {
+                  url: `${TELEGRAM_AUTH_URL}?redirect=/wallet`,
+                },
+              },
+            ],
 
-Select an option below:`;
+            // Auto Trade + Team
+            [
+              {
+                text: "🤖 Auto Trade",
+                web_app: {
+                  url: `${TELEGRAM_AUTH_URL}?redirect=/trade`,
+                },
+              },
+              {
+                text: "👥 Team",
+                web_app: {
+                  url: `${TELEGRAM_AUTH_URL}?redirect=/team`,
+                },
+              },
+            ],
 
-      const menuKeyboard = {
-        inline_keyboard: [
-          [{ text: "🎮 Play Now", web_app: { url: WEB_APP_URL } }],
-          [{ text: "👥 Join Community", url: COMMUNITY_INVITE_LINK }],
-          [{ text: "🌐 Socials", callback_data: "socials" }],
-          [{ text: "❓ How it Works", callback_data: "how_it_works" }],
-        ],
-      };
+            // Community
+            [
+              {
+                text: "👥 Community",
+                url: COMMUNITY_INVITE_LINK,
+              },
+            ],
 
-      await bot.sendMessage(chatId, menuMessage, {
-        reply_markup: menuKeyboard,
-      });
-      break;
+            // Help
+            [
+              {
+                text: "❓ Help",
+                callback_data: "help",
+              },
+            ],
+          ],
+        };
+
+        await bot.sendMessage(
+          chatId,
+          menuMessage,
+          {
+            reply_markup: menuKeyboard,
+            parse_mode: "HTML",
+          }
+        );
+
+        break;
+      }
+    }
+  } catch (error) {
+    console.error("CALLBACK ERROR:", error);
   }
 });
+
+// ============================================================
+// NORMAL MESSAGES
+// ============================================================
 
 bot.on("message", async (msg) => {
   const chatId = msg.chat.id;
   const text = msg.text;
 
-  if (text && text.startsWith("/")) return;
+  if (!text || text.startsWith("/")) {
+    return;
+  }
 
-  if (text === "🎮 Open GenZ") {
-    await bot.sendMessage(chatId, "🎮 Opening GenZ gaming platform...", {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "🚀 Launch GenZ", web_app: { url: WEB_APP_URL } }],
-        ],
-      },
-    });
+  if (text === "🚀 Open CryptoMintX") {
+    await bot.sendMessage(
+      chatId,
+      "🚀 Opening CryptoMintX...",
+      {
+        reply_markup: {
+          inline_keyboard: [
+            [
+              {
+                text: "🚀 Launch CryptoMintX",
+                web_app: {
+                  url: TELEGRAM_AUTH_URL,
+                },
+              },
+            ],
+          ],
+        },
+      }
+    );
   }
 });
 
+// ============================================================
+// ERRORS
+// ============================================================
+
 bot.on("polling_error", (error) => {
-  console.error("Polling error:", error);
+  console.error("Telegram polling error:", error);
 });
 
+// ============================================================
+// PROCESS SHUTDOWN
+// ============================================================
+
 process.on("SIGINT", () => {
-  console.log("Stopping bot...");
+  console.log("Stopping CryptoMintX bot...");
+
   bot.stopPolling();
   process.exit(0);
 });
 
 process.on("SIGTERM", () => {
-  console.log("Stopping bot...");
+  console.log("Stopping CryptoMintX bot...");
+
   bot.stopPolling();
   process.exit(0);
 });

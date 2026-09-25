@@ -4,7 +4,7 @@
   "description": "GenZ Gaming Platform Telegram Bot",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
+    "start": "NODE_OPTIONS=--dns-result-order=ipv4first node index.js",
     "dev": "nodemon index.js"
   },
   "keywords": ["telegram", "bot", "gaming", "genz"],
