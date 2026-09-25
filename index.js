@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const http = require("http");
 const TelegramBot = require("node-telegram-bot-api");
 const fs = require("fs");
 const path = require("path");
@@ -30,6 +31,39 @@ const bot = new TelegramBot(BOT_TOKEN, {
 });
 
 console.log("CryptoMintX Telegram Bot is running...");
+
+// ============================================================
+// RENDER HEALTH SERVER
+// ============================================================
+
+const PORT = process.env.PORT || 10000;
+
+const server = http.createServer((req, res) => {
+  if (req.url === "/health") {
+    res.writeHead(200, {
+      "Content-Type": "application/json",
+    });
+
+    res.end(
+      JSON.stringify({
+        status: "ok",
+        service: "CryptoMintX Telegram Bot",
+      })
+    );
+
+    return;
+  }
+
+  res.writeHead(200, {
+    "Content-Type": "text/plain",
+  });
+
+  res.end("CryptoMintX Telegram Bot is running.");
+});
+
+server.listen(PORT, "0.0.0.0", () => {
+  console.log(`Health server running on port ${PORT}`);
+});
 
 // ============================================================
 // MINI APP URL
@@ -552,12 +586,16 @@ process.on("SIGINT", () => {
   console.log("Stopping CryptoMintX bot...");
 
   bot.stopPolling();
-  process.exit(0);
+  server.close(() => {
+    process.exit(0);
+  });
 });
 
 process.on("SIGTERM", () => {
   console.log("Stopping CryptoMintX bot...");
 
   bot.stopPolling();
-  process.exit(0);
+  server.close(() => {
+    process.exit(0);
+  });
 });
